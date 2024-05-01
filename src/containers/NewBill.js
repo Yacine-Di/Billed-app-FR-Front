@@ -17,8 +17,31 @@ export default class NewBill {
   }
   handleChangeFile = e => {
     e.preventDefault()
-    const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
+    const fileInput = this.document.querySelector(`input[data-testid="file"]`)
+    const file = fileInput.files[0]
+
+    if(!file) {return}
+    const fileType = file["type"]
+    const validImageType = ["image/jpg", "image/jpeg", "image/png"] 
+    const errorElement = document.createElement("div")
+    errorElement.setAttribute("id", "error-msg")
+
+    if(!validImageType.includes(fileType)){
+      errorElement.textContent = "Le fichier sélectionné n'est pas au bon format"
+      errorElement.style.color = "red"
+
+      fileInput.parentNode.appendChild(errorElement)
+      fileInput.value = ""
+
+      return
+    }
+
+    if(this.document.getElementById("error-msg")){
+      this.document.getElementById("error-msg").remove()
+    }
+    
     const filePath = e.target.value.split(/\\/g)
+    console.log(filePath)
     const fileName = filePath[filePath.length-1]
     const formData = new FormData()
     const email = JSON.parse(localStorage.getItem("user")).email

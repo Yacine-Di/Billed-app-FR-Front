@@ -79,7 +79,7 @@ describe("Given I am connected as an employee", () => {
           list: jest.fn(() => Promise.reject(mockError))
         }))
       }
-      const billsInstance = new Bills({ document, onNavigate, store: wrongDataStore })
+      const billsInstance = new Bills({ document, onNavigate, wrongDataStore })
 
       try {
         await billsInstance.getBills()
@@ -110,9 +110,42 @@ describe("Given I am connected as an employee", () => {
       //check if calls work for one icon
       userEvent.click(icons[0])
       expect(handleClickIconEye).toHaveBeenCalled()
-
       const modale = screen.getByTestId("modaleFile")
       expect(modale).toBeTruthy()
+    })
+
+    test("Should go to NewBill Page when i click on New Bill button", () => {
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+
+      document.body.innerHTML = BillsUI({ data: bills })
+      const billsInstance = new Bills(document, onNavigate, store, localStorage)
+      const newBilltButton = screen.getByTestId("btn-new-bill")
+      console.log()
+
+      const handleClickNewBill = jest.fn(() => billsInstance.handleClickNewBill)
+      newBilltButton.addEventListener("click", handleClickNewBill)
+      fireEvent.click(newBilltButton)
+      expect(handleClickNewBill).toHaveBeenCalled()
+    })
+
+    test("Should go to NewBill Page when i click on New Bill button", () => {
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+
+      
     })
   })
 })
