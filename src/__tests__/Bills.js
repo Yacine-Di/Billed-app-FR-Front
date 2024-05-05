@@ -47,9 +47,7 @@ describe("Given I am connected as an employee", () => {
       mockIcon.setAttribute("data-bill-url", "mockBillUrl")
 
       billsInstance.handleClickIconEye = jest.fn()
-
       mockIcon.addEventListener("click", () => billsInstance.handleClickIconEye(mockIcon))
-
       mockIcon.dispatchEvent(new MouseEvent("click", { bubbles: true }))
 
       expect(billsInstance.handleClickIconEye).toHaveBeenCalledWith(mockIcon)
@@ -82,10 +80,25 @@ describe("Given I am connected as an employee", () => {
       const billsInstance = new Bills({ document, onNavigate, wrongDataStore })
 
       try {
-        await billsInstance.getBills()
+       await billsInstance.getBills()
       } catch (err) {
-        expect(err).toBe(mockError)
+        expect(err).toMatch("Fake error")
       }
+    })
+
+    // test d'intégration GET
+    test("fetches bills from mock API GET", async () => {
+      localStorage.setItem("user", JSON.stringify({ type: "Employee", email: "a@a" }));
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+      router()
+      window.onNavigate(ROUTES_PATH.Bills)
+      await waitFor(() => screen.getByText("Mes notes de frais"))
+      const newBillButton  = await screen.getByText("Nouvelle note de frais")
+      expect(newBillButton).toBeTruthy()
+      const actionsTitle  = await screen.getByText("Actions")
+      expect(actionsTitle).toBeTruthy()
     })
 
     test("Should handle click on eye icon", () => {
@@ -120,31 +133,18 @@ describe("Given I am connected as an employee", () => {
         type: 'Employee'
       }))
 
-      const onNavigate = (pathname) => {
-        document.body.innerHTML = ROUTES({ pathname })
-      }
-
-      document.body.innerHTML = BillsUI({ data: bills })
-      const billsInstance = new Bills(document, onNavigate, store, localStorage)
-      const newBilltButton = screen.getByTestId("btn-new-bill")
-      console.log()
-
-      const handleClickNewBill = jest.fn(() => billsInstance.handleClickNewBill)
-      newBilltButton.addEventListener("click", handleClickNewBill)
-      fireEvent.click(newBilltButton)
-      expect(handleClickNewBill).toHaveBeenCalled()
-    })
-
-    test("Should go to NewBill Page when i click on New Bill button", () => {
-      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-      window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee'
-      }))
-
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
+      
+      router()
+      window.onNavigate(ROUTES_PATH.Bills)
 
+      const btnNewBill = screen.getByTestId("btn-new-bill")
+      btnNewBill.dispatchEvent(new MouseEvent("click"))
+
+      const newBillUrl = window.location.href.replace(/^https?:\/\/localhost\//, "")
+      expect(newBillUrl).toBe("#employee/bill/new")
       
     })
   })

@@ -20,11 +20,11 @@ export default class NewBill {
     const fileInput = this.document.querySelector(`input[data-testid="file"]`)
     const file = fileInput.files[0]
 
-    if(!file) {return}
     const fileType = file["type"]
     const validImageType = ["image/jpg", "image/jpeg", "image/png"] 
     const errorElement = document.createElement("div")
     errorElement.setAttribute("id", "error-msg")
+    errorElement.setAttribute("data-testid", "error-msg")
 
     if(!validImageType.includes(fileType)){
       errorElement.textContent = "Le fichier sélectionné n'est pas au bon format"

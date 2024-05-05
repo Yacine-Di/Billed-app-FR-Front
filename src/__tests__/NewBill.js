@@ -5,10 +5,9 @@
 import { fireEvent, screen } from "@testing-library/dom"
 import NewBillUI from "../views/NewBillUI.js"
 import NewBill from "../containers/NewBill.js"
-import { ROUTES, ROUTES_PATH } from "../constants/routes.js"
+import { ROUTES } from "../constants/routes.js"
 import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/store.js"
-import userEvent from "@testing-library/user-event"
 
 beforeEach(() => {
   const html = NewBillUI()
@@ -20,8 +19,17 @@ afterEach(() =>  {
 })
 
 describe("Given I am connected as an employee", () => {
-  describe("When I am on NewBill Page and form is filled correctly", () => {
-    test("Then new bill should be submited", () => {
+  describe("When I am on NewBill Page", () => {
+    const onNavigate = (pathname) => {
+      document.body.innerHTML = ROUTES({ pathname })
+    } 
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+    window.localStorage.setItem('user', JSON.stringify({
+      type: 'Employee'
+    }))
+
+    //Test PSOT new bill ??
+    test("Should be submited when click on submit button", () => {
       //to-do write assertion
       const inputDepenseName = screen.getByTestId("expense-name")
       expect(inputDepenseName.value).toBe("")
@@ -46,11 +54,50 @@ describe("Given I am connected as an employee", () => {
       fireEvent.change(inputCommentary, { target: {value: "Ceci est un commentaire"}})
       expect(inputCommentary.value).toBe("Ceci est un commentaire")
 
+      const bill = new NewBill({document, onNavigate, store: mockStore, localStorage})
       const form = screen.getByTestId("form-new-bill")
-      const handleSubmit = jest.fn((e) => e.preventDefault())
+      const handleSubmit = jest.fn(bill.handleSubmit)
       form.addEventListener("submit", handleSubmit)
       fireEvent.submit(form)
       expect(handleSubmit).toHaveBeenCalled()
+    })
+
+    test("Should upload file when it is jpeg/jpg/png format", () => {
+      const bill = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage })
+      const mockFile = new File(["mock text"],"mockFile.jpeg", { type: "image/jpeg" })
+
+      const handleChangeFile = jest.fn((e) => bill.handleChangeFile(e))
+      const fileInput = screen.getByTestId("file")
+      fileInput.addEventListener("change", handleChangeFile)
+      fireEvent.change(fileInput, {target: {files: [mockFile]} })
+      expect(handleChangeFile).toHaveBeenCalled()
+    })
+
+    test("Should display error when file is not jpeg/jpg/png format", () => {
+      const bill = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage })
+      const mockFile = new File(["mock text"],"mockFile.txt", { type: "text/plain" })
+
+      const handleChangeFile = jest.fn((e) => bill.handleChangeFile(e))
+      const fileInput = screen.getByTestId("file")
+      fileInput.addEventListener("change", handleChangeFile)
+      fireEvent.change(fileInput, {target: {files: [mockFile]} })
+      expect(handleChangeFile).toHaveBeenCalled()
+    })
+
+    test("Should remove div error when good file format is selected after bad file format", () => {
+      const bill = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage })
+      const mockFileTxt = new File(["mock text"],"mockFile.txt", { type: "text/plain" })
+      const mockFileImg = new File(["mock text"],"mockFile.jpeg", { type: "image/jpeg" })
+
+      const handleChangeFile = jest.fn((e) => bill.handleChangeFile(e))
+      const fileInput = screen.getByTestId("file")
+      fileInput.addEventListener("change", handleChangeFile)
+      fireEvent.change(fileInput, {target: {files: [mockFileTxt]} })
+
+      fireEvent.change(fileInput, {target: {files: [mockFileImg]} })
+      const errorMsg = screen.queryByText("Le fichier sélectionné n'est pas au bon format")
+      expect(errorMsg).toBeNull()
+
     })
   })
 })
