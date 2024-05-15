@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { screen,  waitFor } from "@testing-library/dom"
+import { screen, waitFor } from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import Bills from "../containers/Bills.js"
 import { bills } from "../fixtures/bills.js"
@@ -41,6 +41,7 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted)
     })
 
+    //test de l'icon eye
     test("handleClickIconEye is called when the eye icon is clicked", () => {
       const billsInstance = new Bills({ document, onNavigate: jest.fn(), store })
       const mockIcon = document.createElement("div")
@@ -53,6 +54,33 @@ describe("Given I am connected as an employee", () => {
       expect(billsInstance.handleClickIconEye).toHaveBeenCalledWith(mockIcon)
     })
 
+    test("Should open modal when click on eye icon", () => {
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+      document.body.innerHTML = BillsUI({ data: bills })
+      const billsInstance = new Bills({ document, onNavigate, store, localStorage })
+      //mock handle function
+      const handleClickIconEye = jest.fn(billsInstance.handleClickIconEye)
+      const icons = screen.getAllByTestId("icon-eye")
+      //mock modal function
+      window.$.fn.modal = jest.fn()
+      icons.forEach(icon => {
+        icon.addEventListener("click", handleClickIconEye(icon))
+      })
+
+      //check if calls work for one icon
+      userEvent.click(icons[0])
+      expect(handleClickIconEye).toHaveBeenCalled()
+      const modale = screen.getByTestId("modaleFile")
+      expect(modale).toBeTruthy()
+    })
+
+    //Call API
     test("Should get bills from store with getbills methode", async () => {
       Object.defineProperty(window, 'localStorage', { value: localStorageMock })
       window.localStorage.setItem('user', JSON.stringify({
@@ -80,7 +108,7 @@ describe("Given I am connected as an employee", () => {
       const billsInstance = new Bills({ document, onNavigate, wrongDataStore })
 
       try {
-       await billsInstance.getBills()
+        await billsInstance.getBills()
       } catch (err) {
         expect(err).toMatch("Fake error")
       }
@@ -92,41 +120,18 @@ describe("Given I am connected as an employee", () => {
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
+
       router()
       window.onNavigate(ROUTES_PATH.Bills)
+
       await waitFor(() => screen.getByText("Mes notes de frais"))
-      const newBillButton  = await screen.getByText("Nouvelle note de frais")
+      const newBillButton = await screen.getByText("Nouvelle note de frais")
       expect(newBillButton).toBeTruthy()
-      const actionsTitle  = await screen.getByText("Actions")
+      const actionsTitle = await screen.getByText("Actions")
       expect(actionsTitle).toBeTruthy()
     })
 
-    test("Should handle click on eye icon", () => {
-      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-      window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee'
-      }))
-      const onNavigate = (pathname) => {
-        document.body.innerHTML = ROUTES({ pathname })
-      }
-      document.body.innerHTML = BillsUI({ data: bills })
-      const billsInstance = new Bills({ document, onNavigate, store, localStorage })
-      //mock handle function
-      const handleClickIconEye = jest.fn(billsInstance.handleClickIconEye)
-      const icons = screen.getAllByTestId("icon-eye")
-      //mock modal function
-      window.$.fn.modal = jest.fn()
-      icons.forEach(icon => {
-        icon.addEventListener("click", handleClickIconEye(icon))
-      })
-
-      //check if calls work for one icon
-      userEvent.click(icons[0])
-      expect(handleClickIconEye).toHaveBeenCalled()
-      const modale = screen.getByTestId("modaleFile")
-      expect(modale).toBeTruthy()
-    })
-
+    //test Route NewBill page
     test("Should go to NewBill Page when i click on New Bill button", () => {
       Object.defineProperty(window, 'localStorage', { value: localStorageMock })
       window.localStorage.setItem('user', JSON.stringify({
@@ -136,16 +141,52 @@ describe("Given I am connected as an employee", () => {
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
-      
+
       router()
       window.onNavigate(ROUTES_PATH.Bills)
 
       const btnNewBill = screen.getByTestId("btn-new-bill")
       btnNewBill.dispatchEvent(new MouseEvent("click"))
-
       const newBillUrl = window.location.href.replace(/^https?:\/\/localhost\//, "")
       expect(newBillUrl).toBe("#employee/bill/new")
-      
+    })
+  })
+})
+
+    // test d'intégration API errors
+describe("Given I am connected as an employee", () => {
+  describe("When I navigate to Bills page", () => {
+    describe("When an error occurs on API", () => {
+      test("fetches bills from an API and fails with 404 message error", async () => {
+        const mockError = new Error("Error 404")
+        const wrongDataStore = {
+          bills: jest.fn(() => ({
+            list: jest.fn(() => Promise.reject(mockError))
+          }))
+        }
+        const billsInstance = new Bills({ document, onNavigate, store: wrongDataStore })
+
+        try {
+          await billsInstance.getBills()
+        } catch (error) {
+          expect(error).toBe(mockError)
+        }
+      })
+      test("fetches messages from an API and fails with 500 message error", async () => {
+        const mockError = new Error("Error 500")
+        const wrongDataStore = {
+          bills: jest.fn(() => ({
+            list: jest.fn(() => Promise.reject(mockError))
+          }))
+        }
+        const billsInstance = new Bills({ document, onNavigate, store: wrongDataStore })
+
+        try {
+          await billsInstance.getBills()
+        } catch (error) {
+          expect(error).toBe(mockError)
+        }
+      })
     })
   })
 })

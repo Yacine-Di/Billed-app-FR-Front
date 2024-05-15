@@ -5,7 +5,7 @@
 import { fireEvent, screen } from "@testing-library/dom"
 import NewBillUI from "../views/NewBillUI.js"
 import NewBill from "../containers/NewBill.js"
-import { ROUTES } from "../constants/routes.js"
+import { ROUTES, ROUTES_PATH } from "../constants/routes.js"
 import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/store.js"
 
@@ -28,8 +28,8 @@ describe("Given I am connected as an employee", () => {
       type: 'Employee'
     }))
 
+    //Test POST
     test("Should be submited when click on submit button", () => {
-      //to-do write assertion
       const inputDepenseName = screen.getByTestId("expense-name")
       expect(inputDepenseName.value).toBe("")
 
