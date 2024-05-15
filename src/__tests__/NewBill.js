@@ -80,7 +80,8 @@ describe("Given I am connected as an employee", () => {
       const fileInput = screen.getByTestId("file")
       fileInput.addEventListener("change", handleChangeFile)
       fireEvent.change(fileInput, {target: {files: [mockFile]} })
-      expect(handleChangeFile).toHaveBeenCalled()
+      const errorMsg = screen.queryAllByText("Le fichier sélectionné n'est pas au bon format")
+      expect(errorMsg).toBeTruthy()
     })
 
     test("Should remove div error when good file format is selected after bad file format", () => {
