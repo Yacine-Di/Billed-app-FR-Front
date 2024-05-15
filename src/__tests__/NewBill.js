@@ -28,7 +28,6 @@ describe("Given I am connected as an employee", () => {
       type: 'Employee'
     }))
 
-    //Test PSOT new bill ??
     test("Should be submited when click on submit button", () => {
       //to-do write assertion
       const inputDepenseName = screen.getByTestId("expense-name")
